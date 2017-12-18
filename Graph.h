@@ -6,14 +6,13 @@
 #include <utility>
 #include <tuple>
 #include <set>
+#include <limits.h>
 
 using namespace std;
 
-extern int INF;
-
 class Graph
 {
-private:
+protected:
 	struct Edge {
 		int adjvex;
 		int cost;
@@ -29,8 +28,8 @@ private:
 		int id;
         double longitude;   //经度
         double latitude;    //纬度
-		Vertex(int _id) { id = _id; }
-        Vertex(int _id, double _lon, double _lat) { id = _id; longitude = _lon; latitude = _lat; }
+		Vertex(int _id): id(_id){};
+        Vertex(int _id, double _lon, double _lat): id(_id), longitude(_lon), latitude(_lat){};
 	};
 	vector<Vertex> head;
 	vector<Edge> adjTable;
@@ -43,6 +42,8 @@ public:
 	void addUndirectedEdge(int start, int end, int value);
 	unsigned long getNodeNum();
 	int getDistance(int s, int e);
+
+	static Graph* readRoadNetwork(const char* nodeFile, const char* edgeFile);
 };
 
 
