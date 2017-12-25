@@ -192,7 +192,7 @@ bool HisGraph::readTrajectory(const char *filename)
         return false;
     Trajectory* traj = new Trajectory();
     char str[100];
-    int h, m, s;
+    // int h, m, s;
     while(~fscanf(f, "%s", str))
     {
         int node;
@@ -202,7 +202,7 @@ bool HisGraph::readTrajectory(const char *filename)
         }
         else
         {
-            // sscanf(str, "%d:%d:%d %d", &h, &m, &s, &node);
+            //sscanf(str, "%d:%d:%d %d", &h, &m, &s, &node);
             continue;
         }
         if (traj->size() == 0 or node != traj->back()->no)
@@ -266,14 +266,13 @@ bool HisGraph::readTrajectory(const char *filename)
 
 void HisGraph::readAllTrajectories()
 {
-    int N = 1;
+    int N = 8;
     char filename[100];
     for (int i=1; i<=N; i++)
     {
         for (int j=1; ;j++)
         {
             sprintf(filename, "../data/05%02d/ST_%d.txt", i, j);
-            FILE* f = fopen(filename, "r");
 
             if (!readTrajectory(filename))
             {
@@ -364,6 +363,29 @@ void HisGraph::testTrajectory(const char* filename)
         }
         cout << "Prob1: " << allpro1 <<"\tProb2: " << allpro2 <<endl;
     }
-
+    fclose(f);
     delete traj;
+}
+
+void HisGraph::save(const char* filename)
+{
+    ofstream f(filename);
+    //boost::archive::text_oarchive oa(f);
+    boost::archive::binary_oarchive oa(f);
+    oa << *this;
+    f.close();
+}
+
+void HisGraph::load(const char* filename)
+{
+    ifstream f(filename);
+    //boost::archive::text_iarchive ia(f);
+    boost::archive::binary_iarchive ia(f);
+    ia >> *this;
+    f.close();
+}
+
+HisGraph::HisGraph(const char* filename)
+{
+    load(filename);
 }

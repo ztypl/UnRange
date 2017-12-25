@@ -6,6 +6,7 @@
 #define UNRANGE_HISGRAPH_H
 
 #include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <cmath>
 #include <vector>
@@ -15,12 +16,19 @@
 #include <set>
 #include <limits.h>
 #include <exception>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/serialization/vector.hpp>
 
 using namespace std;
 
 class HisGraph
 {
 private:
+    friend class boost::serialization::access;
+
     const static int NUM_DIRES = 6;
     constexpr static double LATI_DELTA = 111023.45;
     constexpr static double LONG_DELTA = 84029.13;
@@ -42,6 +50,16 @@ private:
             next = _next;
             adjvex = _adjvex;
         }
+        Edge(){};
+
+        friend class boost::serialization::access;
+        template <class Archive> void serialize(Archive & ar, const unsigned int version)
+        {
+            ar & adjvex;
+            ar & cost;
+            ar & next;
+            ar & num_trajs;
+        }
     };
     struct Vertex {
         int id;     // 邻接表下标
@@ -51,6 +69,15 @@ private:
         Vertex(){};
         Vertex(int _id): id(_id){};
         Vertex(int _id, double _lon, double _lat): id(_id), longitude(_lon), latitude(_lat){};
+
+        friend class boost::serialization::access;
+        template <class Archive> void serialize(Archive & ar, const unsigned int version)
+        {
+            ar & id;
+            ar & no;
+            ar & longitude;
+            ar & latitude;
+        }
     };
     vector<Vertex> head;
     vector<Edge> adjTable;
@@ -58,6 +85,7 @@ private:
 public:
     HisGraph(unsigned long nSize);
     HisGraph(const vector<pair<double, double>>& nodes);
+    HisGraph(const char* filename);
     ~HisGraph();
     void addEdge(int start, int end, int value);
     void addUndirectedEdge(int start, int end, int value);
@@ -76,11 +104,18 @@ private:
     vector<Edge*> findAllEdges(Vertex* s);
     int getDir(Vertex* s, Vertex* e);
 
+    template <class Archive> void serialize(Archive & ar, const unsigned int version)
+    {
+        ar & head;
+        ar & adjTable;
+    }
+
 public:
     bool readTrajectory(const char *filename);
     void readAllTrajectories();
     void testTrajectory(const char* filename);
-
+    void save(const char* filename);
+    void load(const char* filename);
 };
 
 struct P {		//Dijkstra

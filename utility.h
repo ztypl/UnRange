@@ -1,5 +1,5 @@
 #ifndef UTILITY_H
-#define UTIITY_H
+#define UTILITY_H
 
 #include <cstdio>
 #include <sys/time.h>

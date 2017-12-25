@@ -15,6 +15,8 @@ int main()
 {
     HisGraph* g = HisGraph::readRoadNetwork(NODE_FILE, EDGE_FILE);
     g->readAllTrajectories();
-    g->testTrajectory("../data/0502/ST_1.txt");
+    g->save("../data/history.ser");
+//    HisGraph* g = new HisGraph("history.ser");
+//    g->testTrajectory("../data/0502/ST_1.txt");
     return 0;
 }
