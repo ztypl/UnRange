@@ -13,10 +13,20 @@ const char* DATA_DIR = "../data";
 
 int main()
 {
-    HisGraph* g = HisGraph::readRoadNetwork(NODE_FILE, EDGE_FILE);
-    g->readAllTrajectories();
-    g->save("../data/history.ser");
-//    HisGraph* g = new HisGraph("history.ser");
-//    g->testTrajectory("../data/0502/ST_1.txt");
+//    HisGraph* g = HisGraph::readRoadNetwork(NODE_FILE, EDGE_FILE);
+//    g->readAllTrajectories();
+//    g->save("../data/history.ser");
+    HisGraph *g = new HisGraph("../data/history.ser");
+
+    auto *x = g->findAllPathByBFS(213367, 274474, 1000);
+    for (auto *p : *x)
+    {
+        for (auto i : *p)
+        {
+            printf("%d,", i);
+        }
+        puts("");
+    }
+//    cout << g->getDistance(213367, 274474) << endl;
     return 0;
 }

@@ -94,6 +94,19 @@ public:
 
     static HisGraph* readRoadNetwork(const char* nodeFile, const char* edgeFile);
 
+    void _debug()
+    {
+        int count[] = {0,0,0,0,0,0};
+        for (auto v : head)
+        {
+            int i = getDegree(&v);
+            if (i <= 5)
+                count[i]++;
+        }
+        for(int i=0;i <=5; i++)
+            printf("%d: %d\n", i, count[i]);
+    }
+
 
 private:
     typedef vector<Vertex*> Trajectory;
@@ -110,10 +123,24 @@ private:
         ar & adjTable;
     }
 
+    struct BFS_P
+    {
+        int id;
+        int prior;
+        int dist;
+        BFS_P(int _id, int _prior, int _dist) :id(_id), prior(_prior), dist(_dist){};
+
+        friend bool operator < (const BFS_P& a, const BFS_P& b)
+        {
+            return a.dist > b.dist;
+        }
+    };
+
 public:
     bool readTrajectory(const char *filename);
     void readAllTrajectories();
     void testTrajectory(const char* filename);
+    vector<vector<int>*>* findAllPathByBFS(int a, int b, int MAX_DIST);
     void save(const char* filename);
     void load(const char* filename);
 };

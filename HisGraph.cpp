@@ -296,7 +296,7 @@ void HisGraph::testTrajectory(const char* filename)
     vector<int> sample_id;
     char str[100];
     int h, m, s;
-    int count = 0;
+    int count = 3;
     while(~fscanf(f, "%s", str))
     {
         int node;
@@ -337,7 +337,7 @@ void HisGraph::testTrajectory(const char* filename)
             int dir = getDir(v, d);
             if (dir == -1)
             {
-                cerr << "Error between node " << v->no <<" and " << n->no <<endl;
+                cerr << "Error between node " << v->no <<" and " << d->no <<endl;
                 continue;
             }
             vector<Edge*> eg = findAllEdges(v);
@@ -365,6 +365,49 @@ void HisGraph::testTrajectory(const char* filename)
     }
     fclose(f);
     delete traj;
+}
+
+vector<vector<int>*>* HisGraph::findAllPathByBFS(int a, int b, int MAX_DIST)
+{
+    vector<BFS_P> path;  // no, prior, dist
+    vector<int> dst_loc;
+
+    priority_queue<BFS_P> q;
+    q.push(BFS_P(a, -1, 0));
+
+    while (!q.empty())
+    {
+        BFS_P curNode = q.top();
+        q.pop();
+        path.push_back(curNode);
+
+        if (curNode.dist > MAX_DIST)
+            break;
+        if (curNode.id == b)
+            dst_loc.push_back(static_cast<int>(path.size())-1);
+
+        int e_id = head[curNode.id].id;
+        while (e_id != -1)
+        {
+            BFS_P nextNode(adjTable[e_id].adjvex, static_cast<int>(path.size()) - 1,
+                           curNode.dist + adjTable[e_id].cost);
+            q.push(nextNode);
+            e_id = adjTable[e_id].next;
+        }
+    }
+    vector<vector<int>*>* all_traj = new vector<vector<int>*>;
+    for (int i=0; i<dst_loc.size(); i++)
+    {
+        vector<int>* traj = new vector<int>();
+        int loc = dst_loc[i];
+        while (loc != -1)
+        {
+            traj->push_back(path[loc].id);
+            loc = path[loc].prior;
+        }
+        all_traj->push_back(traj);
+    }
+    return all_traj;
 }
 
 void HisGraph::save(const char* filename)
