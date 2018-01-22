@@ -367,47 +367,98 @@ void HisGraph::testTrajectory(const char* filename)
     delete traj;
 }
 
-vector<vector<int>*>* HisGraph::findAllPathByBFS(int a, int b, int MAX_DIST)
+//vector<vector<int>*>* HisGraph::findAllSimplePathByBFS(int a, int b, int MAX_DIST)
+//{
+//    vector<BFS_P> path;  // no, prior, dist
+//    vector<int> dst_loc;
+//
+//    priority_queue<BFS_P> q;
+//    q.push(BFS_P(a, -1, 0));
+//
+//    while (!q.empty())
+//    {
+//        BFS_P curNode = q.top();
+//        q.pop();
+//        path.push_back(curNode);
+//
+//        if (curNode.dist > MAX_DIST)
+//            break;
+//        if (curNode.id == b)
+//            dst_loc.push_back(static_cast<int>(path.size())-1);
+//
+//        int e_id = head[curNode.id].id;
+//        while (e_id != -1)
+//        {
+//            BFS_P nextNode(adjTable[e_id].adjvex, static_cast<int>(path.size()) - 1,
+//                           curNode.dist + adjTable[e_id].cost);
+//            q.push(nextNode);
+//            e_id = adjTable[e_id].next;
+//        }
+//    }
+//    vector<vector<int>*>* all_traj = new vector<vector<int>*>;
+//    for (int i=0; i<dst_loc.size(); i++)
+//    {
+//        vector<int>* traj = new vector<int>();
+//        int loc = dst_loc[i];
+//        while (loc != -1)
+//        {
+//            traj->push_back(path[loc].id);
+//            loc = path[loc].prior;
+//        }
+//        all_traj->push_back(traj);
+//    }
+//    return all_traj;
+//}
+
+vector<vector<int>*>* HisGraph::findAllSimplePathByDFS(int a, int b, int MAX_DIST)
 {
-    vector<BFS_P> path;  // no, prior, dist
-    vector<int> dst_loc;
-
-    priority_queue<BFS_P> q;
-    q.push(BFS_P(a, -1, 0));
-
-    while (!q.empty())
+    vector<int> stack;
+    vector<int> stack_e;
+    int dist = 0;       // 记录栈中路径的距离
+    stack.push_back(a);
+    stack_e.push_back(head[a].id);
+    vector<bool> in_stack(this->head.size(), false);
+    in_stack[a] = true;
+    vector<vector<int>*>* result = new vector<vector<int>*>;
+    while (!stack.empty())
     {
-        BFS_P curNode = q.top();
-        q.pop();
-        path.push_back(curNode);
-
-        if (curNode.dist > MAX_DIST)
-            break;
-        if (curNode.id == b)
-            dst_loc.push_back(static_cast<int>(path.size())-1);
-
-        int e_id = head[curNode.id].id;
-        while (e_id != -1)
+        int cur_node = stack.back();
+        int eid = stack_e.back();
+        if (dist < MIN_DIST)
         {
-            BFS_P nextNode(adjTable[e_id].adjvex, static_cast<int>(path.size()) - 1,
-                           curNode.dist + adjTable[e_id].cost);
-            q.push(nextNode);
-            e_id = adjTable[e_id].next;
+            if (cur_node == b)
+            {
+                // ToDo: 输出路径并更新
+            }
+            else
+            {
+                while (eid != -1 and in_stack[adjTable[eid].adjvex])
+                {
+                    eid = adjTable[eid].next;
+                }
+                if (eid == -1)
+                {
+                    stack.pop_back();
+                    stack_e.pop_back();
+                    dist -= adjTable[stack_e.back()].cost;
+                    stack_e[stack_e.size()-1] = adjTable[stack_e.back()].next;
+                }
+                else
+                {
+                    stack_e[stack_e.size()-1] = eid;
+                    dist += adjTable[eid].cost;
+                    int node = adjTable[eid].adjvex;
+                    stack.push_back(node);
+                    stack_e.push_back(head[node].id);
+                }
+            }
+        }
+        else
+        {
+            // ToDo: 超过长度限制时更新
         }
     }
-    vector<vector<int>*>* all_traj = new vector<vector<int>*>;
-    for (int i=0; i<dst_loc.size(); i++)
-    {
-        vector<int>* traj = new vector<int>();
-        int loc = dst_loc[i];
-        while (loc != -1)
-        {
-            traj->push_back(path[loc].id);
-            loc = path[loc].prior;
-        }
-        all_traj->push_back(traj);
-    }
-    return all_traj;
+
 }
 
 void HisGraph::save(const char* filename)

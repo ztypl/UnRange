@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <vector>
+#include <stack>
 #include <queue>
 #include <utility>
 #include <tuple>
@@ -123,24 +124,25 @@ private:
         ar & adjTable;
     }
 
-    struct BFS_P
-    {
-        int id;
-        int prior;
-        int dist;
-        BFS_P(int _id, int _prior, int _dist) :id(_id), prior(_prior), dist(_dist){};
-
-        friend bool operator < (const BFS_P& a, const BFS_P& b)
-        {
-            return a.dist > b.dist;
-        }
-    };
+//    struct BFS_P
+//    {
+//        int id;
+//        int prior;
+//        int dist;
+//        BFS_P(int _id, int _prior, int _dist) :id(_id), prior(_prior), dist(_dist){};
+//
+//        friend bool operator < (const BFS_P& a, const BFS_P& b)
+//        {
+//            return a.dist > b.dist;
+//        }
+//    };
 
 public:
     bool readTrajectory(const char *filename);
     void readAllTrajectories();
     void testTrajectory(const char* filename);
-    vector<vector<int>*>* findAllPathByBFS(int a, int b, int MAX_DIST);
+//    vector<vector<int>*>* findAllSimplePathByBFS(int a, int b, int MAX_DIST);
+    vector<vector<int>*>* findAllSimplePathByDFS(int a, int b, int MAX_DIST);
     void save(const char* filename);
     void load(const char* filename);
 };
