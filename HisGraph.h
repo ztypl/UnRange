@@ -22,6 +22,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/split_member.hpp>
 
 using namespace std;
 
@@ -62,6 +63,7 @@ private:
             ar & num_trajs;
         }
     };
+
     struct Vertex {
         int id;     // 邻接表下标
         int no;     // 编号
@@ -97,17 +99,8 @@ public:
 
     void _debug()
     {
-        int count[] = {0,0,0,0,0,0};
-        for (auto v : head)
-        {
-            int i = getDegree(&v);
-            if (i <= 5)
-                count[i]++;
-        }
-        for(int i=0;i <=5; i++)
-            printf("%d: %d\n", i, count[i]);
+        cout << "" <<endl;
     }
-
 
 private:
     typedef vector<Vertex*> Trajectory;
@@ -118,8 +111,24 @@ private:
     vector<Edge*> findAllEdges(Vertex* s);
     int getDir(Vertex* s, Vertex* e);
 
+//    template<class Archive> void save(Archive & ar, const unsigned int version) const
+//    {
+//        ar & head;
+//        ar & adjTable;
+//        ar & MAX_EDGE_LEN;
+//    }
+//
+//    template<class Archive> void load(Archive & ar, const unsigned int version)
+//    {
+//        ar & head;
+//        ar & adjTable;
+//        ar & MAX_EDGE_LEN;
+//    }
+
     template <class Archive> void serialize(Archive & ar, const unsigned int version)
     {
+//        boost::serialization::split_member(ar, *this, version);
+
         ar & head;
         ar & adjTable;
     }
@@ -141,10 +150,24 @@ public:
     bool readTrajectory(const char *filename);
     void readAllTrajectories();
     void testTrajectory(const char* filename);
-//    vector<vector<int>*>* findAllSimplePathByBFS(int a, int b, int MAX_DIST);
-    vector<vector<int>*>* findAllSimplePathByDFS(int a, int b, int MAX_DIST);
+    vector<vector<int>*>* findAllSimplePathsByDFS(int a, int b, int MAX_DIST);
+    vector<vector<int>*>* findAllPathsByDFS(int a, int b, int MAX_DIST);
+    vector<vector<int>*>* findAllTrailsByDFS(int a, int b, int MAX_DIST);
+    vector<vector<int>*>* findAllUTrailsByDFS(int a, int b, int MAX_DIST);
+
     void save(const char* filename);
     void load(const char* filename);
+
+    // friend class EGrid;
+
+    struct EdgeSegment
+    {
+        int edge_id;
+        int s;
+        int e;
+        EdgeSegment(int _id, int _s, int _e): edge_id(_id), s(_s), e(_e){};
+    };
+    vector<EdgeSegment>* getRangeRoadSegments(int node, int r);
 };
 
 struct P {		//Dijkstra
@@ -155,6 +178,18 @@ struct P {		//Dijkstra
     friend bool operator < (const P& a, const P& b)
     {
         return a.cost > b.cost;
+    }
+};
+
+struct BFS_P
+{
+    int v_id;
+    int e_id;
+    int dist;
+    BFS_P(int _vid, int _eid, int _dist):v_id(_vid), e_id(_eid), dist(_dist){};
+    friend bool operator < (const BFS_P& a, const BFS_P& b)
+    {
+        return a.dist > b.dist;
     }
 };
 

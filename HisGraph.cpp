@@ -256,7 +256,6 @@ bool HisGraph::readTrajectory(const char *filename)
             int e = traj->at(j+1)->no;
             dist += getDistance(s, e);
         }
-
     }
     delete traj;
     fclose(f);
@@ -367,81 +366,38 @@ void HisGraph::testTrajectory(const char* filename)
     delete traj;
 }
 
-//vector<vector<int>*>* HisGraph::findAllSimplePathByBFS(int a, int b, int MAX_DIST)
-//{
-//    vector<BFS_P> path;  // no, prior, dist
-//    vector<int> dst_loc;
-//
-//    priority_queue<BFS_P> q;
-//    q.push(BFS_P(a, -1, 0));
-//
-//    while (!q.empty())
-//    {
-//        BFS_P curNode = q.top();
-//        q.pop();
-//        path.push_back(curNode);
-//
-//        if (curNode.dist > MAX_DIST)
-//            break;
-//        if (curNode.id == b)
-//            dst_loc.push_back(static_cast<int>(path.size())-1);
-//
-//        int e_id = head[curNode.id].id;
-//        while (e_id != -1)
-//        {
-//            BFS_P nextNode(adjTable[e_id].adjvex, static_cast<int>(path.size()) - 1,
-//                           curNode.dist + adjTable[e_id].cost);
-//            q.push(nextNode);
-//            e_id = adjTable[e_id].next;
-//        }
-//    }
-//    vector<vector<int>*>* all_traj = new vector<vector<int>*>;
-//    for (int i=0; i<dst_loc.size(); i++)
-//    {
-//        vector<int>* traj = new vector<int>();
-//        int loc = dst_loc[i];
-//        while (loc != -1)
-//        {
-//            traj->push_back(path[loc].id);
-//            loc = path[loc].prior;
-//        }
-//        all_traj->push_back(traj);
-//    }
-//    return all_traj;
-//}
 
-vector<vector<int>*>* HisGraph::findAllSimplePathByDFS(int a, int b, int MAX_DIST)
+vector<vector<int>*>* HisGraph::findAllPathsByDFS(int a, int b, int MAX_DIST)
 {
     vector<int> stack;
     vector<int> stack_e;
     int dist = 0;       // 记录栈中路径的距离
     stack.push_back(a);
     stack_e.push_back(head[a].id);
-    vector<bool> in_stack(this->head.size(), false);
-    in_stack[a] = true;
     vector<vector<int>*>* result = new vector<vector<int>*>;
     while (!stack.empty())
     {
         int cur_node = stack.back();
         int eid = stack_e.back();
-        if (dist < MIN_DIST)
+        if (dist <= MAX_DIST)
         {
             if (cur_node == b)
             {
-                // ToDo: 输出路径并更新
+                result->push_back(new vector<int>(stack));
+                stack.pop_back();
+                stack_e.pop_back();
+                dist -= adjTable[stack_e.back()].cost;
+                stack_e[stack_e.size()-1] = adjTable[stack_e.back()].next;
             }
             else
             {
-                while (eid != -1 and in_stack[adjTable[eid].adjvex])
-                {
-                    eid = adjTable[eid].next;
-                }
                 if (eid == -1)
                 {
                     stack.pop_back();
                     stack_e.pop_back();
                     dist -= adjTable[stack_e.back()].cost;
-                    stack_e[stack_e.size()-1] = adjTable[stack_e.back()].next;
+                    if (!stack_e.empty())
+                        stack_e[stack_e.size()-1] = adjTable[stack_e.back()].next;
                 }
                 else
                 {
@@ -455,10 +411,243 @@ vector<vector<int>*>* HisGraph::findAllSimplePathByDFS(int a, int b, int MAX_DIS
         }
         else
         {
-            // ToDo: 超过长度限制时更新
+            stack.pop_back();
+            stack_e.pop_back();
+            dist -= adjTable[stack_e.back()].cost;
+            stack_e[stack_e.size()-1] = adjTable[stack_e.back()].next;
         }
     }
+    return result;
+}
 
+vector<vector<int>*>* HisGraph::findAllSimplePathsByDFS(int a, int b, int MAX_DIST)
+{
+    vector<int> stack;
+    vector<int> stack_e;
+    int dist = 0;       // 记录栈中路径的距离
+    stack.push_back(a);
+    stack_e.push_back(head[a].id);
+    vector<bool> in_stack(this->head.size(), false);
+    in_stack[a] = true;
+    vector<vector<int>*>* result = new vector<vector<int>*>;
+    while (!stack.empty())
+    {
+        int cur_node = stack.back();
+        int eid = stack_e.back();
+        if (dist <= MAX_DIST)
+        {
+            if (cur_node == b)
+            {
+                result->push_back(new vector<int>(stack));
+                in_stack[stack.back()] = false;
+                stack.pop_back();
+                stack_e.pop_back();
+                dist -= adjTable[stack_e.back()].cost;
+                stack_e[stack_e.size()-1] = adjTable[stack_e.back()].next;
+            }
+            else
+            {
+                while (eid != -1 and in_stack[adjTable[eid].adjvex])
+                {
+                    eid = adjTable[eid].next;
+                }
+                if (eid == -1)
+                {
+                    in_stack[stack.back()] = false;
+                    stack.pop_back();
+                    stack_e.pop_back();
+                    dist -= adjTable[stack_e.back()].cost;
+                    if (!stack_e.empty())
+                        stack_e[stack_e.size()-1] = adjTable[stack_e.back()].next;
+                }
+                else
+                {
+                    stack_e[stack_e.size()-1] = eid;
+                    dist += adjTable[eid].cost;
+                    int node = adjTable[eid].adjvex;
+                    in_stack[node] = true;
+                    stack.push_back(node);
+                    stack_e.push_back(head[node].id);
+                }
+            }
+        }
+        else
+        {
+            in_stack[stack.back()] = false;
+            stack.pop_back();
+            stack_e.pop_back();
+            dist -= adjTable[stack_e.back()].cost;
+            stack_e[stack_e.size()-1] = adjTable[stack_e.back()].next;
+        }
+    }
+    return result;
+}
+
+vector<vector<int>*>* HisGraph::findAllTrailsByDFS(int a, int b, int MAX_DIST)
+{
+    vector<int> stack;
+    vector<int> stack_e;
+    int dist = 0;       // 记录栈中路径的距离
+    stack.push_back(a);
+    stack_e.push_back(head[a].id);
+    vector<bool> in_stack(this->adjTable.size(), false);
+    vector<vector<int>*>* result = new vector<vector<int>*>;
+    while (!stack.empty())
+    {
+        int cur_node = stack.back();
+        int eid = stack_e.back();
+        if (dist <= MAX_DIST)
+        {
+            if (cur_node == b)
+            {
+                result->push_back(new vector<int>(stack));
+                stack.pop_back();
+                stack_e.pop_back();
+                in_stack[stack_e.back()] = false;
+                dist -= adjTable[stack_e.back()].cost;
+                stack_e[stack_e.size()-1] = adjTable[stack_e.back()].next;
+            }
+            else
+            {
+                while (eid != -1 and in_stack[eid])
+                {
+                    eid = adjTable[eid].next;
+                }
+                if (eid == -1)
+                {
+                    stack.pop_back();
+                    stack_e.pop_back();
+                    in_stack[stack_e.back()] = false;
+                    dist -= adjTable[stack_e.back()].cost;
+                    if (!stack_e.empty())
+                        stack_e[stack_e.size()-1] = adjTable[stack_e.back()].next;
+                }
+                else
+                {
+                    in_stack[eid] = true;
+                    stack_e[stack_e.size()-1] = eid;
+                    dist += adjTable[eid].cost;
+                    int node = adjTable[eid].adjvex;
+                    stack.push_back(node);
+                    stack_e.push_back(head[node].id);
+                }
+            }
+        }
+        else
+        {
+            stack.pop_back();
+            stack_e.pop_back();
+            in_stack[stack_e.back()] = false;
+            dist -= adjTable[stack_e.back()].cost;
+            stack_e[stack_e.size()-1] = adjTable[stack_e.back()].next;
+        }
+    }
+    return result;
+}
+
+vector<vector<int>*>* HisGraph::findAllUTrailsByDFS(int a, int b, int MAX_DIST)
+{
+    vector<int> stack;
+    vector<int> stack_e;
+    int dist = 0;       // 记录栈中路径的距离
+    stack.push_back(a);
+    stack_e.push_back(head[a].id);
+    vector<bool> in_stack((this->adjTable.size()>>1)+1, false);
+    vector<vector<int>*>* result = new vector<vector<int>*>;
+    while (!stack.empty())
+    {
+        int cur_node = stack.back();
+        int eid = stack_e.back();
+        if (dist <= MAX_DIST)
+        {
+            if (cur_node == b)
+            {
+                result->push_back(new vector<int>(stack));
+                stack.pop_back();
+                stack_e.pop_back();
+                in_stack[stack_e.back()>>1] = false;
+                dist -= adjTable[stack_e.back()].cost;
+                stack_e[stack_e.size()-1] = adjTable[stack_e.back()].next;
+            }
+            else
+            {
+                while (eid != -1 and in_stack[eid>>1])
+                {
+                    eid = adjTable[eid].next;
+                }
+                if (eid == -1)
+                {
+                    stack.pop_back();
+                    stack_e.pop_back();
+                    in_stack[stack_e.back()>>1] = false;
+                    dist -= adjTable[stack_e.back()].cost;
+                    if (!stack_e.empty())
+                        stack_e[stack_e.size()-1] = adjTable[stack_e.back()].next;
+                }
+                else
+                {
+                    in_stack[eid>>1] = true;
+                    stack_e[stack_e.size()-1] = eid;
+                    dist += adjTable[eid].cost;
+                    int node = adjTable[eid].adjvex;
+                    stack.push_back(node);
+                    stack_e.push_back(head[node].id);
+                }
+            }
+        }
+        else
+        {
+            stack.pop_back();
+            stack_e.pop_back();
+            in_stack[stack_e.back()>>1] = false;
+            dist -= adjTable[stack_e.back()].cost;
+            stack_e[stack_e.size()-1] = adjTable[stack_e.back()].next;
+        }
+    }
+    return result;
+}
+
+vector<HisGraph::EdgeSegment>* HisGraph::getRangeRoadSegments(int node, int r)
+{
+    vector<bool> vis(this->adjTable.size(), false);
+
+    priority_queue<BFS_P> q;
+    vector<HisGraph::EdgeSegment>* result = new vector<HisGraph::EdgeSegment>();
+
+    int edge_id = head[node].id;
+    while (edge_id != -1)
+    {
+        Edge* e = &adjTable[edge_id];
+        q.push(BFS_P(e->adjvex, edge_id, e->cost));
+        vis[edge_id] = true;
+        edge_id = adjTable[edge_id].next;
+    }
+
+    while(!q.empty())
+    {
+        BFS_P cur_node = q.top();
+        q.pop();
+        if (cur_node.dist < r)
+        {
+            result->push_back(HisGraph::EdgeSegment(cur_node.e_id, 0, adjTable[cur_node.e_id].cost));
+            edge_id = head[cur_node.v_id].id;
+            while (edge_id != -1)
+            {
+                Edge* e = &adjTable[edge_id];
+                if (!vis[edge_id])
+                {
+                    q.push(BFS_P(e->adjvex, edge_id, e->cost + cur_node.dist));
+                    vis[edge_id] = true;
+                }
+                edge_id = adjTable[edge_id].next;
+            }
+        }
+        else
+        {
+            result->push_back(HisGraph::EdgeSegment(cur_node.e_id, 0, adjTable[cur_node.e_id].cost - cur_node.dist + r));
+        }
+    }
+    return result;
 }
 
 void HisGraph::save(const char* filename)
